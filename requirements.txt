@@ -1,5 +1,5 @@
-Flask==2.3.2
-Flask-SocketIO==5.3.3
-Flask-SQLAlchemy==3.0.3
-Flask-Login==0.6.1  # Downgrade to a compatible version
-Werkzeug==2.3.3  # Specify a compatible version
+Flask
+Flask-SocketIO
+Flask-SQLAlchemy
+Flask-Login  
+Werkzeug  
