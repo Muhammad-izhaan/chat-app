@@ -61,4 +61,4 @@ def handle_message(msg):
 
 if __name__ == '__main__':
     db.create_all()  # Creates the database tables
-    socketio.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), allow_unsafe_werkzeug=False)
+    socketio.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
