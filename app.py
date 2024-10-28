@@ -1,3 +1,7 @@
+# First, import eventlet and call monkey_patch
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_socketio import SocketIO, emit
 from flask_sqlalchemy import SQLAlchemy
