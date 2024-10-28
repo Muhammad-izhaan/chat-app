@@ -1,0 +1,38 @@
+<!-- templates/chat.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Room</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body class="bg-gray-100 flex flex-col h-screen">
+    <div class="flex-grow overflow-y-auto p-4" id="messages"></div>
+    <form id="message-form" class="flex p-4">
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="message-input" autocomplete="off" placeholder="Type your message..." />
+        <button class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded ml-2" type="submit">Send</button>
+    </form>
+    <script>
+        const socket = io();
+        const form = document.getElementById('message-form');
+        const input = document.getElementById('message-input');
+        const messages = document.getElementById('messages');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (input.value) {
+                socket.emit('send_message', { message: input.value, username: "{{ username }}" });
+                input.value = '';
+            }
+        });
+
+        socket.on('receive_message', function(data) {
+            const msg = document.createElement('div');
+            msg.textContent = `${data.username}: ${data.message}`;
+            messages.appendChild(msg);
+            messages.scrollTop = messages.scrollHeight;
+        });
+    </script>
+</body>
+</html>
