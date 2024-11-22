@@ -3,53 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Room</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"/>
+    <title>Professional Chat Room</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
+        .message-container {
+            height: calc(100vh - 200px);
+        }
+        .message {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white shadow-md rounded-lg p-8 w-96">
-        <h1 class="text-2xl font-bold text-center mb-4">Chat Room</h1>
-        <div id="chat-box" class="overflow-y-auto h-64 mb-4 border rounded-lg p-4 bg-gray-50">
-            <!-- Messages will appear here -->
-        </div>
-        <form id="chat-form" class="flex items-center space-x-2">
-            <input type="text" id="message-input" placeholder="Type a message..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
-            <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded">
-                <i class="fas fa-paper-plane"></i>
+<body class="bg-gray-100">
+    <div id="login-screen" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Welcome to Chat Room</h2>
+            <input type="text" id="username-input" placeholder="Enter your name" 
+                   class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <button onclick="joinChat()" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">
+                Join Chat
             </button>
-        </form>
+        </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+
+    <div id="chat-screen" class="hidden h-screen flex flex-col">
+        <div class="bg-white shadow">
+            <div class="container mx-auto px-4 py-4">
+                <h1 class="text-2xl font-bold text-gray-800">Professional Chat Room</h1>
+                <p class="text-gray-600">Welcome, <span id="user-name"></span>!</p>
+            </div>
+        </div>
+
+        <div class="flex-1 container mx-auto px-4 py-4 overflow-hidden">
+            <div id="messages" class="message-container overflow-y-auto bg-white rounded-lg shadow p-4">
+                <!-- Messages will appear here -->
+            </div>
+        </div>
+
+        <div class="bg-white shadow-lg">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex gap-4">
+                    <input type="text" id="message-input" placeholder="Type your message..." 
+                           class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <button onclick="sendMessage()" class="bg-blue-500 text-white py-2 px-6 rounded hover:bg-blue-600 transition duration-200">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const socket = io();
+        let username = '';
 
-        // Listen for 'receive_message' event from server and display the message
-        socket.on('receive_message', (data) => {
-            const chatBox = document.getElementById('chat-box');
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('bg-orange-100', 'rounded', 'p-2', 'mb-2', 'text-gray-700');
-            messageDiv.innerText = data.message;
-            chatBox.appendChild(messageDiv);
-            chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the latest message
+        function joinChat() {
+            username = document.getElementById('username-input').value.trim();
+            if (username) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('chat-screen').classList.remove('hidden');
+                document.getElementById('user-name').textContent = username;
+                socket.emit('join', { username: username });
+            }
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+            if (message) {
+                socket.emit('message', { message: message });
+                messageInput.value = '';
+            }
+        }
+
+        document.getElementById('message-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
         });
 
-        // Handle message send
-        document.getElementById('chat-form').addEventListener('submit', (event) => {
-            event.preventDefault();
-            const messageInput = document.getElementById('message-input');
-            const message = messageInput.value;
-
-            if (message.trim() !== "") {
-                socket.emit('send_message', { message: message });
-                messageInput.value = ""; // Clear the input field
+        document.getElementById('username-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                joinChat();
             }
+        });
+
+        socket.on('message', function(data) {
+            const messagesDiv = document.getElementById('messages');
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message mb-4 p-3 rounded-lg ' + 
+                                    (data.username === username ? 'bg-blue-100 ml-auto' : 'bg-gray-100');
+            messageElement.innerHTML = `
+                <div class="font-semibold text-sm ${data.username === username ? 'text-blue-600' : 'text-gray-600'}">
+                    ${data.username}
+                </div>
+                <div class="text-gray-800">${data.message}</div>
+            `;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+
+        socket.on('user_joined', function(data) {
+            const messagesDiv = document.getElementById('messages');
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message text-center text-sm text-gray-500 my-2';
+            messageElement.textContent = `${data.username} joined the chat`;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
     </script>
 </body>
